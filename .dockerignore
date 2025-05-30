@@ -1,0 +1,25 @@
+# Ignore Git
+.git
+.gitignore
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+
+# Ignore binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.out
+photogrammetry
+
+# Ignore build folders
+bin/
+build/
+dist/
+
+# Ignore testdata if large
+testdata/
+
