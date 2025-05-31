@@ -11,6 +11,7 @@ import (
 
 func Check(e error) {
 	if e != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", e)
 		panic(e)
 	}
 }
@@ -74,6 +75,7 @@ func DownloadFile(url string) (string, error) {
 }
 
 func CopyFile(src, dst string) error {
+	fmt.Printf("→ Copying file from %s to %s\n", src, dst)
 	input, err := os.ReadFile(src)
 	if err != nil {
 		return fmt.Errorf("failed to read source file %s: %w", src, err)
