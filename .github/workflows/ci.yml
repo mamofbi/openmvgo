@@ -24,6 +24,9 @@ jobs:
     - name: Install mockgen
       run: go install go.uber.org/mock/mockgen@latest
     
+    - name: Install tparse
+      run: go install github.com/mfridman/tparse@latest
+
     - name: Run go generate
       run: go generate ./...
 
