@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/soup666/openMVGO/internal/openmvg"
-	"github.com/soup666/openMVGO/internal/openmvs"
-	"github.com/soup666/openMVGO/internal/utils"
+	"github.com/2024-dissertation/openMVGO/internal/openmvg"
+	"github.com/2024-dissertation/openMVGO/internal/openmvs"
+	"github.com/2024-dissertation/openMVGO/internal/utils"
 	"github.com/urfave/cli/v3"
 )
 

@@ -3,7 +3,7 @@ package openmvs
 import (
 	"fmt"
 
-	"github.com/soup666/openMVGO/internal/utils"
+	"github.com/2024-dissertation/openMVGO/internal/utils"
 )
 
 // Config object

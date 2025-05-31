@@ -1,4 +1,4 @@
-module github.com/soup666/openMVGO
+module github.com/2024-dissertation/openMVGO
 
 go 1.24.3
 

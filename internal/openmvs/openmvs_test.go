@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/soup666/openMVGO/internal/openmvs"
-	"github.com/soup666/openMVGO/mocks"
+	"github.com/2024-dissertation/openMVGO/internal/openmvs"
+	"github.com/2024-dissertation/openMVGO/mocks"
 	"go.uber.org/mock/gomock"
 )
 
