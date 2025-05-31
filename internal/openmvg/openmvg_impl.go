@@ -26,24 +26,12 @@ func NewOpenMVGConfig(inputDir string, outputDir string, cameraDBFile *string) O
 	}
 }
 
-type OpenMVGService interface {
-	RunHealthCheck()
-	SfMSequentialPipeline()
-	RunSfMInitImageListing()
-	RunSfMComputeFeatures()
-	RunSfMPairGenerator()
-	RunSfMComputeMatches()
-	RunSfMGeometricFilter()
-	RunSfMReconstruction()
-	RunSfMComputeSfMDataColor()
-	PopulateTmpDir()
-}
-
 type AppFileServiceImpl struct {
+	Utils  utils.UtilsInterface
 	Config OpenMVGConfig
 }
 
-func NewOpenMVGService(config OpenMVGConfig) AppFileServiceImpl {
+func NewOpenMVGService(config OpenMVGConfig, utils utils.UtilsInterface) AppFileServiceImpl {
 
 	// Pre run folder checks
 	if config.InputDir == "" || config.OutputDir == "" {
@@ -59,6 +47,7 @@ func NewOpenMVGService(config OpenMVGConfig) AppFileServiceImpl {
 	}
 
 	return AppFileServiceImpl{
+		Utils:  utils,
 		Config: config,
 	}
 }
@@ -66,8 +55,8 @@ func NewOpenMVGService(config OpenMVGConfig) AppFileServiceImpl {
 func (s *AppFileServiceImpl) PopulateTmpDir() {
 	// Ensure the camera database file is set, if not download it
 	if s.Config.CameraDBFile == nil || *s.Config.CameraDBFile == "" {
-		f, err := utils.DownloadFile("https://raw.githubusercontent.com/openMVG/openMVG/refs/heads/develop/src/openMVG/exif/sensor_width_database/sensor_width_camera_database.txt")
-		utils.Check(err)
+		f, err := s.Utils.DownloadFile("https://raw.githubusercontent.com/openMVG/openMVG/refs/heads/develop/src/openMVG/exif/sensor_width_database/sensor_width_camera_database.txt")
+		s.Utils.Check(err)
 		s.Config.CameraDBFile = &f
 	}
 
@@ -75,24 +64,19 @@ func (s *AppFileServiceImpl) PopulateTmpDir() {
 
 	// Matches dir
 	matchesDir, err := os.MkdirTemp("", fmt.Sprintf("%dmatches", timestamp))
-	utils.Check(err)
+	s.Utils.Check(err)
 
 	s.Config.MatchesDir = matchesDir
 
 	// Reconstruction dir
 	reconstructionDir, err := os.MkdirTemp("", fmt.Sprintf("%dreconstruction", timestamp))
-	utils.Check(err)
+	s.Utils.Check(err)
 
 	s.Config.ReconstructionDir = reconstructionDir
 
 }
 
 func (s *AppFileServiceImpl) SfMSequentialPipeline() {
-	s.PopulateTmpDir()
-	defer os.Remove(*s.Config.CameraDBFile)
-	defer os.RemoveAll(s.Config.MatchesDir)
-	defer os.RemoveAll(s.Config.ReconstructionDir)
-
 	s.RunSfMInitImageListing()
 	s.RunSfMComputeFeatures()
 	s.RunSfMPairGenerator()
@@ -104,7 +88,7 @@ func (s *AppFileServiceImpl) SfMSequentialPipeline() {
 }
 
 func (s *AppFileServiceImpl) RunHealthCheck() {
-	utils.RunCommand("Tests", []string{})
+	s.Utils.RunCommand("Tests", []string{})
 }
 
 func (s *AppFileServiceImpl) RunSfMInitImageListing() {
@@ -115,7 +99,7 @@ func (s *AppFileServiceImpl) RunSfMInitImageListing() {
 		"-f", "2304", // 2304 is the focal length, adjust as necessary
 	}
 
-	utils.RunCommand("openMVG_main_SfMInit_ImageListing", args)
+	s.Utils.RunCommand("openMVG_main_SfMInit_ImageListing", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMComputeFeatures() {
@@ -125,7 +109,7 @@ func (s *AppFileServiceImpl) RunSfMComputeFeatures() {
 		"-m", "SIFT",
 	}
 
-	utils.RunCommand("openMVG_main_ComputeFeatures", args)
+	s.Utils.RunCommand("openMVG_main_ComputeFeatures", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMPairGenerator() {
@@ -134,7 +118,7 @@ func (s *AppFileServiceImpl) RunSfMPairGenerator() {
 		"-o", s.Config.MatchesDir + "/pairs.bin",
 	}
 
-	utils.RunCommand("openMVG_main_PairGenerator", args)
+	s.Utils.RunCommand("openMVG_main_PairGenerator", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMComputeMatches() {
@@ -144,7 +128,7 @@ func (s *AppFileServiceImpl) RunSfMComputeMatches() {
 		"-o", s.Config.MatchesDir + "/matches.putative.bin",
 	}
 
-	utils.RunCommand("openMVG_main_ComputeMatches", args)
+	s.Utils.RunCommand("openMVG_main_ComputeMatches", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMGeometricFilter() {
@@ -155,7 +139,7 @@ func (s *AppFileServiceImpl) RunSfMGeometricFilter() {
 		"-o", s.Config.MatchesDir + "/matches.f.bin",
 	}
 
-	utils.RunCommand("openMVG_main_GeometricFilter", args)
+	s.Utils.RunCommand("openMVG_main_GeometricFilter", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMReconstruction() {
@@ -166,7 +150,7 @@ func (s *AppFileServiceImpl) RunSfMReconstruction() {
 		"--output_dir", s.Config.ReconstructionDir,
 	}
 
-	utils.RunCommand("openMVG_main_SfM", args)
+	s.Utils.RunCommand("openMVG_main_SfM", args)
 }
 
 func (s *AppFileServiceImpl) RunSfMComputeSfMDataColor() {
@@ -175,7 +159,7 @@ func (s *AppFileServiceImpl) RunSfMComputeSfMDataColor() {
 		"-o", s.Config.ReconstructionDir + "/colorized.ply",
 	}
 
-	utils.RunCommand("openMVG_main_ComputeSfM_DataColor", args)
+	s.Utils.RunCommand("openMVG_main_ComputeSfM_DataColor", args)
 }
 
 func (s *AppFileServiceImpl) RunOpenMVG2OpenMVS() {
@@ -185,5 +169,5 @@ func (s *AppFileServiceImpl) RunOpenMVG2OpenMVS() {
 		"-d", s.Config.OutputDir,
 	}
 
-	utils.RunCommand("openMVG_main_openMVG2openMVS", args)
+	s.Utils.RunCommand("openMVG_main_openMVG2openMVS", args)
 }

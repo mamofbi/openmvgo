@@ -29,3 +29,8 @@ go.work
 testdata/output/*
 
 .DS_Store
+cover.html
+
+vendor/
+
+main

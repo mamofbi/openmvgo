@@ -9,7 +9,13 @@ import (
 	"path/filepath"
 )
 
-func Check(e error) {
+type UtilsImpl struct{}
+
+func NewUtils() UtilsInterface {
+	return &UtilsImpl{}
+}
+
+func (u *UtilsImpl) Check(e error) {
 	if e != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", e)
 		panic(e)
@@ -17,7 +23,7 @@ func Check(e error) {
 }
 
 // RunCommand runs a command with arguments and prints its stdout/stderr in real-time.
-func RunCommand(name string, args []string) error {
+func (u *UtilsImpl) RunCommand(name string, args []string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -31,7 +37,7 @@ func RunCommand(name string, args []string) error {
 }
 
 // EnsureDir creates the directory (and parent dirs) if it doesn't exist.
-func EnsureDir(path string) error {
+func (u *UtilsImpl) EnsureDir(path string) error {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("could not resolve absolute path: %w", err)
@@ -47,7 +53,7 @@ func EnsureDir(path string) error {
 }
 
 // DownloadFile downloads a file from the given URL and saves it to a temporary file.
-func DownloadFile(url string) (string, error) {
+func (u *UtilsImpl) DownloadFile(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("failed to download file from %s: %w", url, err)
@@ -74,7 +80,7 @@ func DownloadFile(url string) (string, error) {
 	return out.Name(), nil
 }
 
-func CopyFile(src, dst string) error {
+func (u *UtilsImpl) CopyFile(src, dst string) error {
 	fmt.Printf("→ Copying file from %s to %s\n", src, dst)
 	input, err := os.ReadFile(src)
 	if err != nil {

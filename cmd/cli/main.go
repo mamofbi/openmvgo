@@ -51,6 +51,9 @@ func main() {
 			fmt.Printf("Input Directory: %s\n", inputDir)
 			fmt.Printf("Output Directory: %s\n", outputDir)
 
+			// Setup Utils
+			utils := utils.NewUtils()
+
 			timestamp := time.Now().Unix()
 
 			// Middle directory creation
@@ -58,19 +61,37 @@ func main() {
 			utils.Check(err)
 			defer os.RemoveAll(buildDir)
 
-			openmvgConfig := openmvg.NewOpenMVGConfig(
-				inputDir,
-				buildDir,
-				&cameraDBFile,
+			// Configure openmvg service
+
+			openmvgService := openmvg.NewOpenMVGService(
+				openmvg.NewOpenMVGConfig(
+					inputDir,
+					buildDir,
+					&cameraDBFile,
+				),
+				utils,
 			)
 
-			openmvg := openmvg.NewOpenMVGService(openmvgConfig)
-			openmvg.SfMSequentialPipeline()
+			// Configure openmvs service
+			openmvsService := openmvs.NewOpenMVSService(
+				openmvs.NewOpenMVSConfig(
+					outputDir,
+					buildDir,
+					maxThreads,
+				),
+				utils,
+			)
 
-			openmvsConfig := openmvs.NewOpenMVSConfig(outputDir, buildDir, maxThreads)
-			openmvsService := openmvs.NewOpenMVSService(openmvsConfig)
+			// Populate and Run Pipelines
+			openmvgService.PopulateTmpDir()
+			defer os.Remove(*openmvgService.Config.CameraDBFile)
+			defer os.RemoveAll(openmvgService.Config.MatchesDir)
+			defer os.RemoveAll(openmvgService.Config.ReconstructionDir)
 
+			openmvgService.SfMSequentialPipeline()
 			openmvsService.RunPipeline()
+
+			// Complete
 			fmt.Println("OpenMVGO pipeline completed successfully!")
 
 			return nil
