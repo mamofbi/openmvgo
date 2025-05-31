@@ -1,0 +1,91 @@
+# ------------------------------
+# Stage 1: Build OpenMVG/OpenMVS
+# ------------------------------
+FROM ubuntu:22.04 AS cv_builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install only build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake build-essential git ca-certificates \
+    python3-dev libboost-all-dev libopencv-dev \
+    libjpeg-dev libpng-dev libtiff-dev libglu1-mesa-dev \
+    libglew-dev libglfw3-dev coinor-libclp-dev libceres-dev \
+    libcgal-dev libcgal-qt5-dev graphviz liblemon-dev \
+    pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+# Build VCG library
+RUN git clone --depth=1 https://github.com/cdcseacave/VCG.git /vcglib
+
+# Build OpenMVG
+RUN git clone --recursive --depth=1 https://github.com/openMVG/openMVG.git /openMVG && \
+    mkdir -p /openMVG_build && cd /openMVG_build && \
+    cmake -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DOpenMVG_USE_RERUN=OFF \
+          /openMVG/src && \
+    make -j$(nproc) && \
+    make install
+
+# Build OpenMVS
+RUN git clone --branch develop --depth=1 https://github.com/cdcseacave/openMVS.git /openMVS && \
+    sed -i 's|<CGAL/AABB_traits_3.h>|<CGAL/AABB_tree.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
+    sed -i 's|<CGAL/AABB_triangle_primitive_3.h>|<CGAL/AABB_triangle_primitive.h>|g' /openMVS/libs/MVS/SceneReconstruct.cpp && \
+    mkdir -p /openMVS_build && cd /openMVS_build && \
+    cmake -DCMAKE_BUILD_TYPE=RELEASE \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DOpenMVG_DIR=/usr/local/lib/cmake/openmvg \
+          -DVCG_ROOT=/vcglib \
+          /openMVS && \
+    make -j$(nproc) && \
+    make install
+
+# ------------------------------
+# Stage 3: Build Blender (minimal)
+# ------------------------------
+FROM ubuntu:22.04 AS blender_builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget xz-utils && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -q https://download.blender.org/release/Blender4.4/blender-4.4.0-linux-x64.tar.xz --no-check-certificate && \
+    mkdir -p /opt/blender && \
+    tar -xf blender-4.4.0-linux-x64.tar.xz -C /opt/blender --strip-components=1 && \
+    rm blender-4.4.0-linux-x64.tar.xz
+
+# -------------------------
+# Stage 4: Dev Environment
+# -------------------------
+FROM ubuntu:22.04  AS final
+
+# Copy OpenMVG and OpenMVS builds from cv_builder
+COPY --from=cv_builder /openMVG_build/Linux-x86_64-RELEASE /usr/local/bin
+COPY --from=cv_builder /openMVS_build/bin /usr/local/bin
+
+# Copy Blender (only essential parts)
+COPY --from=blender_builder /opt/blender/blender /usr/local/bin/blender
+COPY --from=blender_builder /opt/blender/4.4/ /opt/blender/4.4/
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y wget xz-utils libcgal-qt5-dev \
+    libceres-dev libboost-all-dev libopencv-dev build-essential \
+    libboost-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://go.dev/dl/go1.23.8.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.23.8.linux-amd64.tar.gz && \
+    rm -rf go1.23.8.linux-amd64.tar.gz
+
+ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app
+
+EXPOSE 3333
+
+CMD ["tail", "-f", "/dev/null"]

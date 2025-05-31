@@ -2,10 +2,18 @@ package utils
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
+
+func Check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
 
 // RunCommand runs a command with arguments and prints its stdout/stderr in real-time.
 func RunCommand(name string, args []string) error {
@@ -34,5 +42,46 @@ func EnsureDir(path string) error {
 			return fmt.Errorf("failed to create directory %s: %w", abs, err)
 		}
 	}
+	return nil
+}
+
+// DownloadFile downloads a file from the given URL and saves it to a temporary file.
+func DownloadFile(url string) (string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to download file from %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to download file: %s returned status code %d", url, resp.StatusCode)
+	}
+
+	fileName := filepath.Base(url)
+	out, err := os.CreateTemp("", fileName)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file %s: %w", fileName, err)
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to write to file %s: %w", fileName, err)
+	}
+
+	fmt.Printf("→ Downloaded file: %s\n", fileName)
+	return out.Name(), nil
+}
+
+func CopyFile(src, dst string) error {
+	input, err := os.ReadFile(src)
+	if err != nil {
+		return fmt.Errorf("failed to read source file %s: %w", src, err)
+	}
+	err = os.WriteFile(dst, input, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write to destination file %s: %w", dst, err)
+	}
+	fmt.Printf("→ Copied file from %s to %s\n", src, dst)
 	return nil
 }
