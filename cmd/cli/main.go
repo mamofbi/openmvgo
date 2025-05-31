@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/soup666/openMVGO/internal/openmvg"
+	"github.com/soup666/openMVGO/internal/openmvs"
 	"github.com/urfave/cli/v3"
 )
 
@@ -40,15 +41,20 @@ func main() {
 			fmt.Printf("Input Directory: %s\n", inputDir)
 			fmt.Printf("Output Directory: %s\n", outputDir)
 
-			config := openmvg.NewOpenMVGConfig(
+			openmvgConfig := openmvg.NewOpenMVGConfig(
 				inputDir,
 				outputDir,
 				&cameraDBFile,
 			)
 
-			openmvg := openmvg.NewOpenMVGService(config)
-
+			openmvg := openmvg.NewOpenMVGService(openmvgConfig)
 			openmvg.SfMSequentialPipeline()
+
+			openmvsConfig := openmvs.NewOpenMVSConfig(outputDir)
+			openmvsService := openmvs.NewOpenMVSService(openmvsConfig)
+
+			openmvsService.RunPipeline()
+			fmt.Println("OpenMVGO pipeline completed successfully!")
 
 			return nil
 		},

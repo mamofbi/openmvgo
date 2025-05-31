@@ -19,7 +19,6 @@ type OpenMVGConfig struct {
 
 // Create an OpenMVG config. Handles creating tempory directories for mvs and reconstruction
 func NewOpenMVGConfig(inputDir string, outputDir string, cameraDBFile *string) OpenMVGConfig {
-
 	return OpenMVGConfig{
 		InputDir:     inputDir,
 		OutputDir:    outputDir,
@@ -101,6 +100,7 @@ func (s *AppFileServiceImpl) SfMSequentialPipeline() {
 	s.RunSfMGeometricFilter()
 	s.RunSfMReconstruction()
 	s.RunSfMComputeSfMDataColor()
+	s.RunOpenMVG2OpenMVS()
 }
 
 func (s *AppFileServiceImpl) RunHealthCheck() {
@@ -176,6 +176,14 @@ func (s *AppFileServiceImpl) RunSfMComputeSfMDataColor() {
 	}
 
 	utils.RunCommand("openMVG_main_ComputeSfM_DataColor", args)
-	utils.CopyFile(s.Config.ReconstructionDir+"/colorized.ply", s.Config.OutputDir+"colorized.ply")
-	utils.CopyFile(s.Config.ReconstructionDir+"/sfm_data.bin", s.Config.OutputDir+"sfm_data.bin")
+}
+
+func (s *AppFileServiceImpl) RunOpenMVG2OpenMVS() {
+	args := []string{
+		"-i", s.Config.ReconstructionDir + "/sfm_data.bin",
+		"-o", s.Config.OutputDir + "/scene.mvs",
+		"-d", s.Config.OutputDir,
+	}
+
+	utils.RunCommand("openMVG_main_openMVG2openMVS", args)
 }
