@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/2024-dissertation/openMVGO/internal/utils"
+	"github.com/2024-dissertation/openmvgo/internal/utils"
 )
 
 // Config for running the OpenMVG pipeline

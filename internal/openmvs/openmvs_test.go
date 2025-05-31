@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/2024-dissertation/openMVGO/internal/openmvs"
-	"github.com/2024-dissertation/openMVGO/mocks"
+	"github.com/2024-dissertation/openmvgo/internal/openmvs"
+	"github.com/2024-dissertation/openmvgo/mocks"
 	"go.uber.org/mock/gomock"
 )
 

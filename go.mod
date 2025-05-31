@@ -1,4 +1,4 @@
-module github.com/2024-dissertation/openMVGO
+module github.com/2024-dissertation/openmvgo
 
 go 1.24.3
 
