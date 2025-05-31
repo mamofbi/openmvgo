@@ -1,6 +1,5 @@
 # 📷 OpenMVGO - Go wrapper for OpenMVG and OpenMVS
-
-[![Go](https://github.com/2024-dissertation/openmvgo/actions/workflows/ci.yml/badge.svg)](https://github.com/2024-dissertation/openmvgo/actions/workflows/ci.yml)
+[![Go](https://github.com/2024-dissertation/openmvgo/actions/workflows/ci.yml/badge.svg)](https://github.com/2024-dissertation/openmvgo/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/2024-dissertation/openmvgo.svg)](https://pkg.go.dev/github.com/2024-dissertation/openmvgo)
 
 ### Usage
 
